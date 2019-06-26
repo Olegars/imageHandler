@@ -112,6 +112,7 @@ class UploadImage
      */
     public function upload($file, $contentName, $watermark = false, $video = false, $thumbnails = false, $size = false)
     {
+        dump(555);
         //$thumbnails = $this->thumbnail_status;
 
         // Create path for storage and full path to image.
