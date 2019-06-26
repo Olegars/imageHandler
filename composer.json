@@ -1,0 +1,19 @@
+{
+    "name": "oleg/image-handler",
+    "authors": [
+        {
+            "name": "Oleg",
+            "email": "oleg9712949@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.0",
+        "spatie/laravel-glide": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Olegars\\imageHandler\\": "src/"
+        }
+    },
+    "minimum-stability": "stable"
+}
