@@ -10,8 +10,9 @@ use Illuminate\Filesystem\Filesystem as File;
 use Spatie\Glide\GlideImage;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Image;
 
-class UploadImage
+class handlerUploadImage
 {
     /**
      * Use thumbnails or not.
@@ -111,7 +112,7 @@ class UploadImage
      * @return object image
      * @throws UploadImageException
      */
-    public function upload($file, $contentName, $watermark = false, $video = false, $thumbnails = false, $size = false)
+    public function uploads($file, $storeId, $contentName, $watermark = false, $video = false, $thumbnails = false, $size = false)
     {
         //$thumbnails = $this->thumbnail_status;
 
@@ -126,7 +127,7 @@ class UploadImage
 
         // If file from form. Save file to disk.
         if (is_object($file)) {
-            $newName = $this->saveFileToDisk($file, $contentName,$thumbnails,$size);
+            $newName = $this->saveFileToDisk($file, $storeId, $contentName,$thumbnails,$size);
         }
 
         // If file was uploaded then make resize and add watermark.
@@ -144,8 +145,9 @@ class UploadImage
         return $newImage;
     }
 
-    public function delete($imageName, $contentName, $size)
+    public function delete($imageName, $storeId, $contentName, $size)
     {
+        Log::debug($imageName);
         if ($size && is_array($size))
         {
             $thumbnails = $size;
@@ -153,10 +155,6 @@ class UploadImage
         else{
             $thumbnails = $this->thumbnail_status;
         }
-
-        // Create path for storage and full path to image.
-        $imageStorage = $this->baseStore . $contentName . 's/';
-        $imagePath = public_path() . $imageStorage;
 
         // Make array for once image.
         if (is_string($imageName)) {
@@ -168,26 +166,22 @@ class UploadImage
             // Delete each image.
             foreach ($imageName as $image) {
                 // Delete old original image from disk.
-                $this->file->delete($imagePath . $this->original . $image);
+                Storage::delete($storeId.'/'.$contentName.'/'.$this->original.'/'.$image);
+                Log::debug($storeId.'/'.$contentName.'/'.$this->original.$image);
                 // Delete all thumbnails if exist.
                 if ($thumbnails) {
-                    $this->deleteThumbnails($imagePath, $image, $thumbnails);
+                    $this->deleteThumbnails($image, $storeId, $contentName, $size);
                 }
             }
         }
     }
 
-    public function saveFileToDisk($file, $contentName, $thumbnails,$size)
+    public function saveFileToDisk($file,$storeId, $contentName, $thumbnails,$size)
     {
-        // Create path for storage and full path to image.
-        $imageStorage = $this->baseStore . $contentName . 's/';
-        $imagePath = public_path() . $imageStorage;
-
         // Check if image.
         if (!getimagesize($file)) {
             throw new UploadImageException('File should be image format!');
         }
-
         // Get real path to file.
         $pathToFile = $file->getPathname();
         // Get image size.
@@ -203,10 +197,13 @@ class UploadImage
 
         // Generate new file name.
         $newName = $this->generateNewName($contentName, $ext);
-//        $this->createThumbnails($file,$newName);
         // Save image to disk.
-        $file->store('original');
-//        $file->move($imagePath . $this->original, $newName);
+        Storage::putFileAs(
+            $storeId.'/'.$contentName.'/'.$this->original, $file, $newName
+        );
+//        $file->store(
+//            $this->original, 'local'
+//        );
         if ($thumbnails) {
             // If exist array with size
             if ($size && is_array($size))
@@ -215,7 +212,7 @@ class UploadImage
             }
 
             // Create thumbnails.
-            $this->createThumbnails($file,$newName);
+            $this->createThumbnails($file,$storeId,$contentName,$newName);
         }
 
         return $newName;
@@ -238,21 +235,20 @@ class UploadImage
 
         return $newName;
     }
-    public function createThumbnails($file,$newName)
+    public function createThumbnails($file, $storeId,$contentName,$newName)
     {
         // Get all thumbnails and save it.
+        rsort($this->thumbnails,SORT_NUMERIC);
         foreach ($this->thumbnails as $width) {
             // Path to folder where will be save image.
-            $directory = 'w' . $width;
-
-            // Create new folder.
-//            $this->file->makeDirectory($directory, $mode = 0755, true, true);
-            Storage::makeDirectory($directory);
-            // Resize saved image and save to thumbnail folder
-            // (help about attributes http://glide.thephpleague.com/1.0/api/quick-reference/).
-            GlideImage::create($file)
-                ->modify(['w' => $width]);
-            $file->store($directory);
+            $directory = $storeId.'/'.$contentName.'/w' . $width;
+            $pathToFile = $file->getPathname();
+            Image::make($file)->resize($width, null, function ($constraint) {
+                $constraint->aspectRatio();
+            })->save($pathToFile);
+            Storage::putFileAs(
+                $directory, $file, $newName
+            );
         }
     }
 
@@ -262,12 +258,12 @@ class UploadImage
      * @param $imagePath string path to image on the disk
      * @param $imageName string image name
      */
-    public function deleteThumbnails($imagePath, $imageName, $thumbnails)
+    public function deleteThumbnails($image, $storeId, $contentName, $size)
     {
         // Get all thumbnails and delete it.
-        foreach ($thumbnails as $width) {
+        foreach ($size as $width) {
             // Delete old image from disk.
-            $this->file->delete($imagePath . 'w' . $width . '/' . $imageName);
+            Storage::delete($storeId.'/'.$contentName.'/w'.$width.'/'.$image);
         }
     }
 }

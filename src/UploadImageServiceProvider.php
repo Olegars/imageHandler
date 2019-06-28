@@ -38,7 +38,7 @@ class UploadImageServiceProvider extends ServiceProvider
         $this->app->bind('upload-image', function (Container $app) {
             $config = $app['config']['upload-image']['image-settings'];
 
-            return new UploadImage($config);
+            return new handlerUploadImage($config);
         });
     }
 }
