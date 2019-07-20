@@ -1,16 +1,13 @@
 <?php
 
-/**
- * Class for work with images.
- */
 
 namespace Olegars\imageHandler;
 
 use Illuminate\Filesystem\Filesystem as File;
-use Spatie\Glide\GlideImage;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Log;
+use Storage;
+use Log;
 use Image;
+use Olegars\imageHandler\Exceptions\UploadImageException;
 
 class handlerUploadImage
 {
@@ -97,7 +94,7 @@ class handlerUploadImage
         $this->previewWidth = $config['previewWidth'];
         $this->editor_folder = $config['editor_folder'];
 
-        $this->file = new File();
+//        $this->file = new File();
     }
 
     /**
@@ -108,6 +105,7 @@ class handlerUploadImage
      * @param bool $watermark bool watermark status (by default = false)
      * @param bool $video if true then add watermark with video player image to an image
      * @param bool $thumbnails create thumbnails for original image
+     * @param  $storeId string shop's id
      *
      * @return object image
      * @throws UploadImageException
@@ -198,8 +196,8 @@ class handlerUploadImage
         // Generate new file name.
         $newName = $this->generateNewName($contentName, $ext);
         // Save image to disk.
-        Storage::putFileAs(
-            $storeId.'/'.$contentName.'/'.$this->original, $file, $newName
+        Storage::disk('images01')->putFileAs(
+            '/image/000'.$storeId.'/'.$contentName.'/'.$this->original, $file, $newName
         );
 //        $file->store(
 //            $this->original, 'local'
@@ -246,7 +244,7 @@ class handlerUploadImage
             Image::make($file)->resize($width, null, function ($constraint) {
                 $constraint->aspectRatio();
             })->save($pathToFile);
-            Storage::putFileAs(
+            Storage::disk('images01')->putFileAs(
                 $directory, $file, $newName
             );
         }
@@ -263,7 +261,7 @@ class handlerUploadImage
         // Get all thumbnails and delete it.
         foreach ($size as $width) {
             // Delete old image from disk.
-            Storage::delete($storeId.'/'.$contentName.'/w'.$width.'/'.$image);
+            Storage::disk('images01')->delete($storeId.'/'.$contentName.'/w'.$width.'/'.$image);
         }
     }
 }
