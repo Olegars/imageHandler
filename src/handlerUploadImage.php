@@ -164,7 +164,7 @@ class handlerUploadImage
             // Delete each image.
             foreach ($imageName as $image) {
                 // Delete old original image from disk.
-                Storage::delete($storeId.'/'.$contentName.'/'.$this->original.'/'.$image);
+                Storage::delete('/image/'.$storeId.'/'.$contentName.'/'.$this->original.'/'.$image);
                 Log::debug($storeId.'/'.$contentName.'/'.$this->original.$image);
                 // Delete all thumbnails if exist.
                 if ($thumbnails) {
@@ -197,7 +197,7 @@ class handlerUploadImage
         $newName = $this->generateNewName($contentName, $ext);
         // Save image to disk.
         Storage::disk('images01')->putFileAs(
-            '/image/000'.$storeId.'/'.$contentName.'/'.$this->original, $file, $newName
+            '/image/'.$storeId.'/'.$contentName.'/'.$this->original, $file, $newName
         );
 //        $file->store(
 //            $this->original, 'local'
@@ -245,7 +245,7 @@ class handlerUploadImage
                 $constraint->aspectRatio();
             })->save($pathToFile);
             Storage::disk('images01')->putFileAs(
-                $directory, $file, $newName
+                '/image/'.$directory, $file, $newName
             );
         }
     }
@@ -261,7 +261,7 @@ class handlerUploadImage
         // Get all thumbnails and delete it.
         foreach ($size as $width) {
             // Delete old image from disk.
-            Storage::disk('images01')->delete($storeId.'/'.$contentName.'/w'.$width.'/'.$image);
+            Storage::disk('images01')->delete('/image/'.$storeId.'/'.$contentName.'/w'.$width.'/'.$image);
         }
     }
 }
