@@ -1,7 +1,4 @@
 <?php
-/**
- * Get images data.
- */
 
 namespace Olegars\imageHandler;
 
@@ -22,6 +19,7 @@ class UploadImageGet
      * Image path to disk.
      */
     protected $imagePath;
+    protected $size;
 
     /**
      * UploadImageGet constructor.
@@ -29,12 +27,14 @@ class UploadImageGet
      * @param $imageName string image name
      * @param $imageUrl string url to image (/image/upload/image.jpg)
      * @param $imagePath string path image on the disk
+     * @param $imageSize array images  size
      */
-    function __construct($imageName, $imageUrl, $imagePath)
+    function __construct($imageName, $imageUrl, $imagePath, $size)
     {
         $this->imageName = $imageName;
         $this->imageUrl = $imageUrl;
         $this->imagePath = $imagePath;
+        $this->size = $size;
     }
 
     /**
@@ -65,5 +65,13 @@ class UploadImageGet
     public function getImagePath()
     {
         return $this->imagePath;
+    }
+    public function getImageSize()
+    {
+        return $this->size;
+    }
+    public function getNameSize()
+    {
+        return ['name'=>$this->imageName, 'size'=>$this->size];
     }
 }

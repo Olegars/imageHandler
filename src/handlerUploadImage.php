@@ -120,25 +120,25 @@ class handlerUploadImage
         $imagePath = public_path() . $imageStorage;
         // If file URL string.
         if (is_string($file) && !empty($file)) {
-            $newName = $this->saveLinkImage($file, $contentName);
+            $images['name'] = $this->saveLinkImage($file, $contentName);
         }
 
         // If file from form. Save file to disk.
         if (is_object($file)) {
-            $newName = $this->saveFileToDisk($file, $storeId, $contentName,$thumbnails,$size);
+            $images = $this->saveFileToDisk($file, $storeId, $contentName,$thumbnails,$size);
         }
 
         // If file was uploaded then make resize and add watermark.
-        if (!isset($newName)) {
+        if (!isset($images['name'])) {
             throw new UploadImageException('Can\'t upload image!');
         }
 
-        $originalPath = $imagePath . $this->original . $newName;
+        $originalPath = $imagePath . $this->original . $images['name'];
 
 
-        $url = $imageStorage . $this->original . $newName;
+        $url = $imageStorage . $this->original . $images['name'];
 //
-        $newImage = new UploadImageGet($newName, $url, $originalPath);
+        $newImage = new UploadImageGet($images['name'], $url, $originalPath, $images['size']);
 
         return $newImage;
     }
@@ -202,6 +202,7 @@ class handlerUploadImage
 //        $file->store(
 //            $this->original, 'local'
 //        );
+        $sizeTh=[];
         if ($thumbnails) {
             // If exist array with size
             if ($size && is_array($size))
@@ -210,10 +211,10 @@ class handlerUploadImage
             }
 
             // Create thumbnails.
-            $this->createThumbnails($file,$storeId,$contentName,$newName);
+            $sizeTh=$this->createThumbnails($file,$storeId,$contentName,$newName);
         }
 
-        return $newName;
+        return ['name'=>$newName, 'size'=>$sizeTh];
     }
 
     /**
@@ -236,18 +237,21 @@ class handlerUploadImage
     public function createThumbnails($file, $storeId,$contentName,$newName)
     {
         // Get all thumbnails and save it.
+        $size=[];
         rsort($this->thumbnails,SORT_NUMERIC);
         foreach ($this->thumbnails as $width) {
             // Path to folder where will be save image.
             $directory = $storeId.'/'.$contentName.'/w' . $width;
             $pathToFile = $file->getPathname();
-            Image::make($file)->resize($width, null, function ($constraint) {
+            $height=Image::make($file)->resize($width, null, function ($constraint) {
                 $constraint->aspectRatio();
-            })->save($pathToFile);
+            })->save($pathToFile)->height();
             Storage::disk('images01')->putFileAs(
                 '/image/'.$directory, $file, $newName
             );
+            $size[$width]=$height;
         }
+        return $size;
     }
 
     /**
