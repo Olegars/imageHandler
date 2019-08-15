@@ -145,7 +145,7 @@ class handlerUploadImage
 
     public function delete($imageName, $storeId, $contentName, $size)
     {
-        Log::debug($imageName);
+//        Log::debug($imageName);
         if ($size && is_array($size))
         {
             $thumbnails = $size;
