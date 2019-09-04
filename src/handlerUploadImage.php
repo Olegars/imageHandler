@@ -101,7 +101,9 @@ class handlerUploadImage
      * Upload image to disk.
      *
      * @param $file object instance image or image string
+     * @param $storeId string id store
      * @param $contentName string content name (use for create and named folder)
+     * @param $server string server name
      * @param bool $watermark bool watermark status (by default = false)
      * @param bool $video if true then add watermark with video player image to an image
      * @param bool $thumbnails create thumbnails for original image
@@ -110,7 +112,7 @@ class handlerUploadImage
      * @return object image
      * @throws UploadImageException
      */
-    public function uploads($file, $storeId, $contentName, $watermark = false, $video = false, $thumbnails = false, $size = false)
+    public function uploads($file, $storeId, $contentName, $server, $watermark = false, $video = false, $thumbnails = false, $size = false)
     {
         //$thumbnails = $this->thumbnail_status;
 
@@ -125,7 +127,7 @@ class handlerUploadImage
 
         // If file from form. Save file to disk.
         if (is_object($file)) {
-            $images = $this->saveFileToDisk($file, $storeId, $contentName,$thumbnails,$size);
+            $images = $this->saveFileToDisk($file, $storeId, $contentName, $server, $thumbnails,$size);
         }
 
         // If file was uploaded then make resize and add watermark.
@@ -143,7 +145,7 @@ class handlerUploadImage
         return $newImage;
     }
 
-    public function delete($imageName, $storeId, $contentName, $size)
+    public function delete($imageName, $storeId, $contentName, $server, $size)
     {
 //        Log::debug($imageName);
         if ($size && is_array($size))
@@ -164,7 +166,7 @@ class handlerUploadImage
             // Delete each image.
             foreach ($imageName as $image) {
                 // Delete old original image from disk.
-                Storage::disk('images01')->delete('/image/'.$storeId.'/'.$contentName.'/'.$this->original.'/'.$image);
+                Storage::disk($server)->delete('/image/'.$storeId.'/'.$contentName.'/'.$this->original.'/'.$image);
                 Log::debug($storeId.'/'.$contentName.'/'.$this->original.$image);
                 // Delete all thumbnails if exist.
                 if ($thumbnails) {
@@ -174,7 +176,7 @@ class handlerUploadImage
         }
     }
 
-    public function saveFileToDisk($file,$storeId, $contentName, $thumbnails,$size)
+    public function saveFileToDisk($file,$storeId, $contentName, $server, $thumbnails,$size)
     {
         // Check if image.
         if (!getimagesize($file)) {
@@ -196,7 +198,7 @@ class handlerUploadImage
         // Generate new file name.
         $newName = $this->generateNewName($contentName, $ext);
         // Save image to disk.
-        Storage::disk('images01')->putFileAs(
+        Storage::disk($server)->putFileAs(
             '/image/'.$storeId.'/'.$contentName.'/'.$this->original, $file, $newName
         );
 //        $file->store(
@@ -211,7 +213,7 @@ class handlerUploadImage
             }
 
             // Create thumbnails.
-            $sizeTh=$this->createThumbnails($file,$storeId,$contentName,$newName);
+            $sizeTh=$this->createThumbnails($file,$storeId,$contentName, $server, $newName);
         }
 
         return ['name'=>$newName, 'size'=>$sizeTh];
@@ -234,7 +236,7 @@ class handlerUploadImage
 
         return $newName;
     }
-    public function createThumbnails($file, $storeId,$contentName,$newName)
+    public function createThumbnails($file, $storeId,$contentName, $server, $newName)
     {
         // Get all thumbnails and save it.
         $size=[];
@@ -246,7 +248,7 @@ class handlerUploadImage
             $height=Image::make($file)->resize($width, null, function ($constraint) {
                 $constraint->aspectRatio();
             })->save($pathToFile)->height();
-            Storage::disk('images01')->putFileAs(
+            Storage::disk($server)->putFileAs(
                 '/image/'.$directory, $file, $newName
             );
             $size[$width]=$height;
@@ -260,12 +262,12 @@ class handlerUploadImage
      * @param $imagePath string path to image on the disk
      * @param $imageName string image name
      */
-    public function deleteThumbnails($image, $storeId, $contentName, $size)
+    public function deleteThumbnails($image, $storeId, $contentName, $server, $size)
     {
         // Get all thumbnails and delete it.
         foreach ($size as $width) {
             // Delete old image from disk.
-            Storage::disk('images01')->delete('/image/'.$storeId.'/'.$contentName.'/w'.$width.'/'.$image);
+            Storage::disk($server)->delete('/image/'.$storeId.'/'.$contentName.'/w'.$width.'/'.$image);
         }
     }
 }
