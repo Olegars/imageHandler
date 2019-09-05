@@ -170,7 +170,7 @@ class handlerUploadImage
                 Log::debug($storeId.'/'.$contentName.'/'.$this->original.$image);
                 // Delete all thumbnails if exist.
                 if ($thumbnails) {
-                    $this->deleteThumbnails($image, $storeId, $contentName, $size);
+                    $this->deleteThumbnails($image, $storeId, $contentName, $server, $size);
                 }
             }
         }
