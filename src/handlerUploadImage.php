@@ -167,7 +167,7 @@ class handlerUploadImage
             foreach ($imageName as $image) {
                 // Delete old original image from disk.
                 Storage::disk($server)->delete('/image/'.$storeId.'/'.$contentName.'/'.$this->original.'/'.$image);
-                Log::debug($storeId.'/'.$contentName.'/'.$this->original.$image);
+//                Log::debug($storeId.'/'.$contentName.'/'.$this->original.$image);
                 // Delete all thumbnails if exist.
                 if ($thumbnails) {
                     $this->deleteThumbnails($image, $storeId, $contentName, $server, $size);
